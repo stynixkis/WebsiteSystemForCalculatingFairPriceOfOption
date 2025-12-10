@@ -1,0 +1,50 @@
+﻿@inherits NavMenuModel
+@rendermode InteractiveServer
+
+<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+<div class="search-container" style="margin: 1rem 0 1rem 0">
+    <input type="text" class="search-input" placeholder="поиск"
+           @bind="searchText"
+           @bind:event="oninput"
+           @bind:after="OnSearchValueChanged"
+           @onkeypress="OnSearchKeyPress" />
+    <button class="search-btn" @onclick="SearchProducts">🔍︎</button>
+</div>
+<h5 style="margin:0 0 0 1em;">Все опционы</h5>
+<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+    <nav class="flex-column">
+        @foreach (var number in filteredOptionCodes)
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="@GetHref(number)">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> @number
+                </NavLink>
+            </div>
+        }
+        @if (!filteredOptionCodes.Any())
+        {
+            <div class="nav-item px-3">
+                <span class="nav-link text-muted">Совпадений не найдено</span>
+            </div>
+        }
+    </nav>
+</div>
+<style>
+    /* Черный скроллбар для боковой панели */
+    .nav-scrollable::-webkit-scrollbar-track {
+        background-color: #000000 !important;
+    }
+
+    .nav-scrollable::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .nav-scrollable::-webkit-scrollbar-thumb {
+        background-color: #555555 !important;
+        border-radius: 4px;
+    }
+
+    .nav-scrollable::-webkit-scrollbar-thumb:hover {
+        background-color: #777777 !important;
+    }
+</style>

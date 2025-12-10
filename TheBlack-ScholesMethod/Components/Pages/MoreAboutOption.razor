@@ -1,0 +1,888 @@
+﻿@page "/more"
+@inherits MoreAboutOptionModel
+<PageTitle>Справедливая цена опциона. Метод Блэка-Шоулза. Подробности</PageTitle>
+@rendermode InteractiveServer
+
+<div class="container-fluid">
+	<div class="row">
+		<div class="col-12">
+			<h3 class="mb-4">Опцион: @OptionName</h3>
+		</div>
+	</div>
+
+	<!-- Основная информация об опционе -->
+	<div class="row mb-4">
+		<div class="col-md-6">
+			<div class="card">
+				<div class="card-header black-header">
+					<h5 class="mb-0">Основные параметры</h5>
+				</div>
+				<div class="card-body">
+					<div class="row">
+						<div class="col-12 mb-2">
+							<strong>Цена исполнения (страйк):</strong> @(strikePrice)$
+						</div>
+						<div class="col-12 mb-2">
+							<strong>Дата экспирации:</strong> @expirationDate.ToString("dd.MM.yyyy")
+						</div>
+						<div class="col-12 mb-2">
+							<strong>Волатильность для Call-опциона:</strong> @callVolatility.ToString("F1")
+						</div>
+						<div class="col-12">
+							<strong>Волатильность для Put-опциона:</strong> @putVolatility.ToString("F1")
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="col-md-6">
+			<div class="card">
+				<div class="card-header black-header">
+					<h5 class="mb-0">Информация об активе</h5>
+				</div>
+				<div class="card-body">
+					<div class="row">
+						<div class="col-12 mb-2">
+							<strong>Актив:</strong> @assetId
+						</div>
+						<div class="col-12 mb-2">
+							<strong>Текущая цена актива:</strong> @(currentAssetPrice)
+						</div>
+						<div class="col-12 mb-2">
+							<strong>Тип актива:</strong> @(typeActive)
+						</div>
+						<div class="col-12 mb-2">
+							<strong>Валюта:</strong> @(valuteActive)
+						</div>
+					</div>
+				</div>
+			</div>
+
+
+			<div class="card mt-3">
+				<div class="card-header black-header">
+					<h5 class="mb-0">Текущие цены опционов</h5>
+				</div>
+				<div class="card-body">
+					<div class="row">
+						<div class="col-12 mb-2">
+							<strong>Текущая цена опциона Call: </strong> @(currentCallPrice)
+						</div>
+						<div class="col-12">
+							@if (currentPutPrice == null)
+							{
+								<p><strong>Текущая цена опциона Put: </strong> не высчитывается </p>
+							}
+							else
+							{
+								<strong>Текущая цена опциона Put: </strong> @(currentPutPrice)
+							}
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Графики истории цен -->
+	<div class="row mb-4">
+		<!-- Call опцион -->
+		<div class="col-md-6">
+			<div class="card">
+				<div class="card-header black-header">
+					<h5 class="mb-0">История изменения цены опциона Call</h5>
+				</div>
+				<div class="card-body">
+					<div class="chart-container">
+						<div class="chart-area">
+							<PlotlyChart @bind-Config="configCallOptionPrice" @bind-Layout="layoutCallOptionPrice" @bind-Data="dataOptionCall" @ref="chartCallOptionPrice" />
+						</div>
+					</div>
+				</div>
+			</div>
+		</div> 
+		<!-- Put опцион -->
+		@if (currentPutPrice != null)
+		{
+			<div class="col-md-6">
+				<div class="card">
+					<div class="card-header black-header">
+						<h5 class="mb-0">История изменения цены опциона Put</h5>
+					</div>
+					<div class="card-body">
+						<div class="chart-container">
+							<div class="chart-area">
+								<PlotlyChart @bind-Config="configPutOptionPrice" @bind-Layout="layoutPutOptionPrice" @bind-Data="dataOptionPut" @ref="chartPutOptionPrice" />
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		}
+	</div>
+
+	<!-- Греки -->
+	<div class="row">
+		<div class="col-12">
+			<div class="card">
+				<div class="card-header black-header">
+					<h5 class="mb-0">История изменения греков</h5>
+				</div>
+				<div class="card-body">
+					<div class="mb-3">
+						<h6>Выберите греки для отображения:</h6>
+						<div class="d-flex flex-wrap gap-2">
+							@foreach (var greek in greeks)
+							{
+								<div class="form-check">
+									<input type="checkbox"
+										   class="form-check-input"
+										   @onclick="@(() => OnGreekSelectionChanged(greek))" />
+									<label class="form-check-label greek-tooltip"
+										   for="@greek.Name"
+										   data-title="@(greek.Description)">
+										@greek.Name
+									</label>
+								</div>
+							}
+						</div>
+						<div class="mt-2">
+							<small class="text-muted">Выбрано: @selectedGreeksCount</small>
+						</div>
+					</div>
+
+					@if (greeks[0].IsSelected == true)
+					{
+						<!-- Объединенные графики греков -->
+						<div class="row mb-4">
+							<div class="col-md-6">
+								<div class="card">
+									<div class="card-header black-header">
+										<h6 class="mb-0">Грек @greeks[0].Name для Call опциона</h6>
+									</div>
+									<div class="card-body">
+										<div class="chart-container">
+											@if (selectedGreeksCount > 0)
+											{
+													<div class="chart-area">
+														<PlotlyChart @bind-Config="configDeltaOptionCall" @bind-Layout="layoutDeltaOptionCall" @bind-Data="dataDeltaOptionCall" @ref="chartDeltaOptionCall" />
+													</div>
+											}
+											else
+											{
+												<span class="chart-placeholder">
+													Выберите греки для отображения
+												</span>
+											}
+										</div>
+									</div>
+								</div>
+							</div>
+							@if (currentPutPrice != null)
+							{
+								<div class="col-md-6">
+									<div class="card">
+										<div class="card-header black-header">
+											<h6 class="mb-0">Грек @greeks[0].Name для Put опциона</h6>
+										</div>
+										<div class="card-body">
+											<div class="chart-container greek-chart">
+												@if (selectedGreeksCount > 0)
+												{
+														<div class="chart-area">
+															<PlotlyChart @bind-Config="configDeltaOptionPut" @bind-Layout="layoutDeltaOptionPut" @bind-Data="dataDeltaOptionPut" @ref="chartDeltaOprionPut" />
+														</div>
+												}
+												else
+												{
+													<span class="chart-placeholder">
+														Выберите греки для отображения
+													</span>
+												}
+											</div>
+										</div>
+									</div>
+								</div>
+							}
+						</div>
+					}
+
+					@if (greeks[1].IsSelected == true)
+					{
+						<!-- Объединенные графики греков -->
+						<div class="row mb-4">
+							<div class="col-md-6">
+								<div class="card">
+									<div class="card-header black-header">
+										<h6 class="mb-0">Грек @greeks[1].Name для Call опциона</h6>
+									</div>
+									<div class="card-body">
+										<div class="chart-container greek-chart">
+											@if (selectedGreeksCount > 0)
+											{
+													<div class="chart-area">
+														<PlotlyChart @bind-Config="configGammaOptionCall" @bind-Layout="layoutGammaOptionCall" @bind-Data="dataGammaOptionCall" @ref="chartGammaOptionCall" />
+													</div>
+											}
+											else
+											{
+												<span class="chart-placeholder">
+													Выберите греки для отображения
+												</span>
+											}
+										</div>
+									</div>
+								</div>
+							</div>
+							@if (currentPutPrice != null)
+							{
+								<div class="col-md-6">
+									<div class="card">
+										<div class="card-header black-header">
+											<h6 class="mb-0">Грек @greeks[1].Name для Put опциона</h6>
+										</div>
+										<div class="card-body">
+											<div class="chart-container greek-chart">
+												@if (selectedGreeksCount > 0)
+												{
+														<div class="chart-area">
+															<PlotlyChart @bind-Config="configGammaOptionPut" @bind-Layout="layoutGammaOptionPut" @bind-Data="dataGammaOptionPut" @ref="chartGammaOprionPut" />
+														</div>
+												}
+												else
+												{
+													<span class="chart-placeholder">
+														Выберите греки для отображения
+													</span>
+												}
+											</div>
+										</div>
+									</div>
+								</div>
+							}
+						</div>
+					}
+
+					@if (greeks[2].IsSelected == true)
+					{
+						<!-- Объединенные графики греков -->
+						<div class="row mb-4">
+							<div class="col-md-6">
+								<div class="card">
+									<div class="card-header black-header">
+										<h6 class="mb-0">Грек @greeks[2].Name для Call опциона</h6>
+									</div>
+									<div class="card-body">
+										<div class="chart-container greek-chart">
+											@if (selectedGreeksCount > 0)
+											{
+													<div class="chart-area">
+														<PlotlyChart @bind-Config="configVegaOptionCall" @bind-Layout="layoutVegaOptionCall" @bind-Data="dataVegaOptionCall" @ref="chartVegaOptionCall" />
+													</div>
+											}
+											else
+											{
+												<span class="chart-placeholder">
+													Выберите греки для отображения
+												</span>
+											}
+										</div>
+									</div>
+								</div>
+							</div>
+							@if (currentPutPrice != null)
+							{
+								<div class="col-md-6">
+									<div class="card">
+										<div class="card-header black-header">
+											<h6 class="mb-0">Грек @greeks[2].Name для Put опциона</h6>
+										</div>
+										<div class="card-body">
+											<div class="chart-container greek-chart">
+												@if (selectedGreeksCount > 0)
+												{
+														<div class="chart-area">
+															<PlotlyChart @bind-Config="configVegaOptionPut" @bind-Layout="layoutVegaOptionPut" @bind-Data="dataVegaOptionPut" @ref="chartVegaOprionPut" />
+														</div>
+												}
+												else
+												{
+													<span class="chart-placeholder">
+														Выберите греки для отображения
+													</span>
+												}
+											</div>
+										</div>
+									</div>
+								</div>
+							}
+						</div>
+					}
+
+					@if (greeks[3].IsSelected == true)
+					{
+						<!-- Объединенные графики греков -->
+						<div class="row mb-4">
+							<div class="col-md-6">
+								<div class="card">
+									<div class="card-header black-header">
+										<h6 class="mb-0">Грек @greeks[3].Name для Call опциона</h6>
+									</div>
+									<div class="card-body">
+										<div class="chart-container greek-chart">
+											@if (selectedGreeksCount > 0)
+											{
+													<div class="chart-area">
+														<PlotlyChart @bind-Config="configThetaOptionCall" @bind-Layout="layoutThetaOptionCall" @bind-Data="dataThetaOptionCall" @ref="chartThetaOptionCall" />
+													</div>
+											}
+											else
+											{
+												<span class="chart-placeholder">
+													Выберите греки для отображения
+												</span>
+											}
+										</div>
+									</div>
+								</div>
+							</div>
+							@if (currentPutPrice != null)
+							{
+								<div class="col-md-6">
+									<div class="card">
+										<div class="card-header black-header">
+											<h6 class="mb-0">Грек @greeks[3].Name для Put опциона</h6>
+										</div>
+										<div class="card-body">
+											<div class="chart-container greek-chart">
+												@if (selectedGreeksCount > 0)
+												{
+														<div class="chart-area">
+															<PlotlyChart @bind-Config="configThetaOptionPut" @bind-Layout="layoutThetaOptionPut" @bind-Data="dataThetaOptionPut" @ref="chartThetaOprionPut" />
+														</div>
+												}
+												else
+												{
+													<span class="chart-placeholder">
+														Выберите греки для отображения
+													</span>
+												}
+											</div>
+										</div>
+									</div>
+								</div>
+							}
+						</div>
+					}
+					@if (greeks[4].IsSelected == true)
+					{
+						<!-- Объединенные графики греков -->
+						<div class="row mb-4">
+							<div class="col-md-6">
+								<div class="card">
+									<div class="card-header black-header">
+										<h6 class="mb-0">Грек @greeks[4].Name для Call опциона</h6>
+									</div>
+									<div class="card-body">
+										<div class="chart-container greek-chart">
+											@if (selectedGreeksCount > 0)
+											{
+													<div class="chart-area">
+														<PlotlyChart @bind-Config="configRhoOptionCall" @bind-Layout="layoutRhoOptionCall" @bind-Data="dataRhoOptionCall" @ref="chartRhoOptionCall" />
+													</div>
+											}
+											else
+											{
+												<span class="chart-placeholder">
+													Выберите греки для отображения
+												</span>
+											}
+										</div>
+									</div>
+								</div>
+							</div>
+							@if (currentPutPrice != null)
+							{
+								<div class="col-md-6">
+									<div class="card">
+										<div class="card-header black-header">
+											<h6 class="mb-0">Грек @greeks[4].Name для Put опциона</h6>
+										</div>
+										<div class="card-body">
+											<div class="chart-container greek-chart">
+												@if (selectedGreeksCount > 0)
+												{
+														<div class="chart-area">
+															<PlotlyChart @bind-Config="configRhoOptionPut" @bind-Layout="layoutRhoOptionPut" @bind-Data="dataRhoOptionPut" @ref="chartRhoOprionPut" />
+														</div>
+												}
+												else
+												{
+													<span class="chart-placeholder">
+														Выберите греки для отображения
+													</span>
+												}
+											</div>
+										</div>
+									</div>
+								</div>
+							}
+						</div>
+					}
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<style>
+	.simple-line-chart {
+		height: 300px;
+		display: flex;
+		flex-direction: column;
+		position: relative;
+	}
+
+	.chart-title {
+		text-align: center;
+		font-weight: bold;
+		margin-bottom: 20px;
+		color: #333;
+	}
+
+	.chart-area {
+		flex: 1;
+		position: relative;
+		border-bottom: 2px solid #ddd;
+		border-left: 2px solid #ddd;
+		margin: 10px 0 10px 50px;
+		background: transparent;
+	}
+
+	.chart-line {
+		position: relative;
+		width: 100%;
+		height: 100%;
+	}
+
+	.y-axis-labels {
+		position: absolute;
+		left: -50px;
+		top: 0;
+		bottom: 0;
+		width: 45px;
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+	}
+
+	.y-axis-label {
+		position: absolute;
+		left: 0;
+		transform: translateY(50%);
+		font-size: 11px;
+		color: #666;
+		font-weight: 500;
+		text-align: right;
+		width: 100%;
+		padding-right: 8px;
+		background: none;
+		z-index: 2;
+	}
+
+	.chart-point {
+		position: absolute;
+		width: 12px;
+		height: 12px;
+		border-radius: 50%;
+		border: 3px solid #000000;
+		box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+		transform: translate(-50%, 50%);
+		cursor: pointer;
+		transition: all 0.3s ease;
+		z-index: 3;
+	}
+
+		/* Цвета для греков */
+		.chart-point.delta-point {
+			background: #ff6384; /* Розовый для дельты */
+		}
+
+		.chart-point.gamma-point {
+			background: #36a2eb; /* Синий для гаммы */
+		}
+
+		.chart-point.vega-point {
+			background: #ffce56; /* Желтый для веги */
+		}
+
+		.chart-point.theta-point {
+			background: green; /* Бирюзовый для теты */
+		}
+
+		.chart-point.rho-point {
+			background: #9966ff; /* Фиолетовый для ро */
+		}
+
+		.chart-point:hover {
+			transform: translate(-50%, 50%) scale(1.3);
+			z-index: 10;
+		}
+
+		.chart-point::after {
+			content: attr(title);
+			position: absolute;
+			top: -40px;
+			left: 50%;
+			transform: translateX(-50%);
+			background: #333;
+			color: white;
+			padding: 6px 12px;
+			border-radius: 4px;
+			font-size: 12px;
+			white-space: nowrap;
+			opacity: 0;
+			transition: opacity 0.3s ease;
+			pointer-events: none;
+			z-index: 11;
+		}
+
+		.chart-point:hover::after {
+			opacity: 1;
+		}
+
+	/* ВЕРТИКАЛЬНЫЕ ПОДПИСИ НА ОСИ X */
+	.chart-labels {
+		display: flex;
+		justify-content: space-between;
+		padding: 10px 0 0 50px;
+		color: #666;
+		font-weight: 500;
+		font-size: 12px;
+		position: relative;
+		height: 40px;
+	}
+
+	.chart-label {
+		writing-mode: vertical-rl;
+		text-orientation: mixed;
+		transform: rotate(180deg);
+		padding: 5px 2px;
+		text-align: center;
+		white-space: nowrap;
+		height: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		position: absolute;
+		transform-origin: center;
+		margin-left: 0;
+	}
+
+	.chart-labels span {
+		writing-mode: vertical-rl; /* Вертикальный текст */
+		text-orientation: mixed;
+		transform: rotate(180deg); /* Переворачиваем текст */
+		padding: 5px 2px;
+		text-align: center;
+		white-space: nowrap;
+		height: 40px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	/* Легенда */
+	.chart-legend {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 10px;
+		margin-top: 15px;
+		justify-content: center;
+	}
+
+	.legend-item {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		padding: 4px 8px;
+		background: #f8f9fa;
+		border-radius: 4px;
+		border: 1px solid #dee2e6;
+	}
+
+	.legend-color {
+		width: 12px;
+		height: 12px;
+		border-radius: 50%;
+	}
+
+		.legend-color.delta-point {
+			background: #ff6384;
+		}
+
+		.legend-color.gamma-point {
+			background: #36a2eb;
+		}
+
+		.legend-color.vega-point {
+			background: #ffce56;
+		}
+
+		.legend-color.theta-point {
+			background: #4bc0c0;
+		}
+
+		.legend-color.rho-point {
+			background: #9966ff;
+		}
+
+	.legend-label {
+		font-size: 12px;
+		color: #666;
+		font-weight: 500;
+	}
+
+	.card {
+		margin-bottom: 20px;
+		box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+		border: none;
+	}
+
+	.card-header {
+		font-weight: 600;
+		border-bottom: 1px solid rgba(0,0,0,0.1);
+	}
+
+	/* Стили для подсказок греков */
+	.greek-tooltip {
+		position: relative;
+		cursor: help;
+	}
+
+		.greek-tooltip:hover::after {
+			content: attr(data-title);
+			position: absolute;
+			bottom: 100%;
+			left: 50%;
+			transform: translateX(-50%);
+			background: rgba(0, 0, 0, 0.9);
+			color: white;
+			padding: 10px 14px;
+			border-radius: 6px;
+			font-size: 12px;
+			white-space: normal;
+			z-index: 1000;
+			margin-bottom: 8px;
+			min-width: 250px;
+			max-width: 300px;
+			text-align: center;
+			line-height: 1.4;
+			box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+		}
+
+		.greek-tooltip:hover::before {
+			content: '';
+			position: absolute;
+			bottom: 100%;
+			left: 50%;
+			transform: translateX(-50%);
+			border: 6px solid transparent;
+			border-top-color: rgba(0, 0, 0, 0.9);
+			z-index: 1000;
+			margin-bottom: 2px;
+		}
+
+	.form-check {
+		display: inline-block;
+		margin-right: 15px;
+	}
+
+	.form-check-label {
+		cursor: pointer;
+		padding: 8px 16px;
+		border: 1px solid #6c757d;
+		border-radius: 4px;
+		background-color: transparent;
+		color: #6c757d;
+		transition: all 0.3s ease;
+	}
+
+	.form-check-input:checked + .form-check-label {
+		background-color: #000000;
+		color: white;
+		border-color: #000000;
+	}
+
+	.form-check-input:checked {
+		background-color: #000000;
+		border-color: #000000;
+	}
+
+	.form-check-input:focus {
+		border-color: #000000;
+		box-shadow: 0 0 0 0.2rem rgba(0, 0, 0, 0.25);
+	}
+
+	.chart-placeholder {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		height: 200px;
+		color: #6c757d;
+		font-style: italic;
+	}
+
+	/* Адаптивность для маленьких экранов */
+	@@media (max-width: 480px) {
+		.simple-line-chart {
+			height: 180px;
+		}
+
+		.chart-title {
+			margin-bottom: 10px;
+			font-size: 12px;
+		}
+
+		.chart-labels {
+			padding: 10px 0 0 30px;
+			height: 40px;
+		}
+
+		.chart-label {
+			font-size: 7px;
+		}
+
+		.chart-area {
+			margin: 5px 0 5px 30px;
+		}
+
+		.y-axis-labels {
+			left: -30px;
+			width: 25px;
+		}
+
+		.y-axis-label {
+			font-size: 8px;
+			padding-right: 4px;
+		}
+
+		.chart-point {
+			width: 8px;
+			height: 8px;
+			border-width: 2px;
+		}
+
+			.chart-point:hover {
+				transform: translate(-50%, 50%) scale(1.2);
+			}
+
+			.chart-point::after {
+				font-size: 9px;
+				padding: 3px 6px;
+				top: -30px;
+			}
+
+		.chart-legend {
+			margin-top: 8px;
+			gap: 4px;
+		}
+
+		.legend-item {
+			padding: 1px 4px;
+		}
+
+		.legend-color {
+			width: 8px;
+			height: 8px;
+		}
+
+		.legend-label {
+			font-size: 9px;
+		}
+
+		.chart-labels:not(.horizontal) .chart-label {
+			font-size: 7px;
+			height: 12px;
+			margin-left: 3px;
+		}
+	}
+
+	/* Дополнительно для очень маленьких экранов */
+	@@media (max-width: 360px) {
+		.simple-line-chart {
+			height: 160px;
+		}
+
+		.chart-labels {
+			padding: 8px 0 0 25px;
+			height: 35px;
+		}
+
+		.chart-label {
+			font-size: 6px;
+		}
+
+		.chart-area {
+			margin: 5px 0 5px 25px;
+		}
+
+		.y-axis-labels {
+			left: -25px;
+			width: 20px;
+		}
+
+		.y-axis-label {
+			font-size: 7px;
+		}
+
+		.chart-labels:not(.horizontal) .chart-label {
+			font-size: 6px;
+			height: 10px;
+		}
+
+		.form-check {
+			margin-right: 8px;
+		}
+
+		.form-check-label {
+			padding: 6px 12px;
+			font-size: 11px;
+		}
+	}
+
+	/* Специальные медиа-запросы для нестандартных разрешений */
+	@@media (max-width: 800px) and (max-height: 700px) {
+		.simple-line-chart {
+			height: 200px;
+		}
+
+		.chart-labels {
+			height: 35px;
+		}
+
+		.chart-label {
+			font-size: 8px;
+		}
+	}
+
+	@@media (max-width: 700px) and (max-height: 600px) {
+		.simple-line-chart {
+			height: 180px;
+		}
+
+		.chart-title {
+			margin-bottom: 8px;
+			font-size: 11px;
+		}
+
+		.chart-labels {
+			height: 30px;
+		}
+
+		.chart-label {
+			font-size: 7px;
+		}
+	}
+</style>

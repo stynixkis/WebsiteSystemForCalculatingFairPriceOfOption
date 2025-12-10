@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35222.181
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TheBlack-ScholesMethod", "TheBlack-ScholesMethod\TheBlack-ScholesMethod.csproj", "{FF27E4FD-62B6-4597-9FFB-9F0B69CD9B86}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SystemOfUpdatingDataOnOptions", "..\SystemOfUpdatingDataOnOptions\SystemOfUpdatingDataOnOptions\SystemOfUpdatingDataOnOptions.csproj", "{5DFC2AFF-5072-4A7A-B22F-B921D1608ED9}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FF27E4FD-62B6-4597-9FFB-9F0B69CD9B86}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FF27E4FD-62B6-4597-9FFB-9F0B69CD9B86}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FF27E4FD-62B6-4597-9FFB-9F0B69CD9B86}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FF27E4FD-62B6-4597-9FFB-9F0B69CD9B86}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5DFC2AFF-5072-4A7A-B22F-B921D1608ED9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5DFC2AFF-5072-4A7A-B22F-B921D1608ED9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5DFC2AFF-5072-4A7A-B22F-B921D1608ED9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5DFC2AFF-5072-4A7A-B22F-B921D1608ED9}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A407C7C4-0457-4986-93E9-B7B97BDAB16E}
+	EndGlobalSection
+EndGlobal

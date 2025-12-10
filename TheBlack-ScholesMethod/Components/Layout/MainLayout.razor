@@ -1,0 +1,23 @@
+﻿@inherits LayoutComponentBase
+<main>
+    <div class="top-row px-4">
+        <a href="@GetHref()" style="font-size: 24px; text-decoration: none; color:white;">
+            Справедливая цена опциона. Метод Блэка-Шоулза
+        </a>
+    </div>
+</main>
+<div class="page">
+
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+    <article class="content px-4">
+        @Body
+    </article>
+</div>
+@code{
+    protected string GetHref()
+    {
+        return $"/";
+    }
+}
